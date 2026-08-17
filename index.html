@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>ConfessIt 💬</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f0f14;
+      color: white;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 55px 20px 40px;
+      background: linear-gradient(135deg, #6c2cff, #b52cff);
+    }
+
+    header h1 {
+      font-size: 44px;
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    main {
+      width: 92%;
+      max-width: 700px;
+      margin: 30px auto;
+    }
+
+    .card {
+      background: #191922;
+      border: 1px solid #292936;
+      border-radius: 18px;
+      padding: 22px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .card h2 {
+      margin-bottom: 15px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 150px;
+      resize: none;
+      outline: none;
+      border: 1px solid #30303d;
+      border-radius: 12px;
+      padding: 15px;
+      background: #101017;
+      color: white;
+      font-size: 16px;
+    }
+
+    textarea:focus {
+      border-color: #8a4cff;
+    }
+
+    textarea::placeholder {
+      color: #777;
+    }
+
+    .bottom-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      gap: 10px;
+    }
+
+    #counter {
+      color: #888;
+      font-size: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      background: #7b35ff;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      background: #914fff;
+      transform: translateY(-2px);
+    }
+
+    #message {
+      margin-top: 12px;
+      color: #b88cff;
+      min-height: 20px;
+    }
+
+    .section-title {
+      margin-bottom: 15px;
+    }
+
+    .confession {
+      background: #191922;
+      border: 1px solid #292936;
+      border-radius: 18px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+
+    .confession-text {
+      line-height: 1.6;
+      color: #eee;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .confession-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+      padding-top: 12px;
+      border-top: 1px solid #292936;
+    }
+
+    .date {
+      color: #777;
+      font-size: 13px;
+    }
+
+    .like-btn {
+      background: transparent;
+      padding: 6px 10px;
+      font-size: 17px;
+    }
+
+    .like-btn:hover {
+      background: #292936;
+      transform: none;
+    }
+
+    .empty {
+      text-align: center;
+      color: #777;
+      padding: 30px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 35px 20px;
+      color: #777;
+      font-size: 14px;
+    }
+
+    @media (max-width: 500px) {
+      header h1 {
+        font-size: 36px;
+      }
+
+      .bottom-row {
+        align-items: flex-end;
+      }
+
+      button {
+        padding: 11px 14px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>💬 ConfessIt</h1>
+    <p>Your thoughts. Your secrets. Anonymous.</p>
+  </header>
+
+  <main>
+
+    <!-- SUBMIT CONFESSION -->
+    <section class="card">
+
+      <h2>✍️ Make a Confession</h2>
+
+      <textarea
+        id="confessionInput"
+        maxlength="500"
+        placeholder="Write your confession anonymously..."
+      ></textarea>
+
+      <div class="bottom-row">
+        <span id="counter">0/500</span>
+
+        <button id="submitBtn">
+          Post Confession
+        </button>
+      </div>
+
+      <p id="message"></p>
+
+    </section>
+
+    <!-- CONFESSIONS -->
+    <section>
+
+      <h2 class="section-title">
+        🔥 Recent Confessions
+      </h2>
+
+      <div id="confessions"></div>
+
+    </section>
+
+  </main>
+
+  <footer>
+    🔒 No names. No judgment. Be respectful.
+  </footer>
+
+
+  <script>
+
+    const input = document.getElementById("confessionInput");
+    const counter = document.getElementById("counter");
+    const submitBtn = document.getElementById("submitBtn");
+    const confessionsContainer =
+      document.getElementById("confessions");
+    const message = document.getElementById("message");
+
+
+    // Load saved confessions
+    let confessions =
+      JSON.parse(localStorage.getItem("confessions")) || [];
+
+
+    // Save confessions
+    function saveConfessions() {
+
+      localStorage.setItem(
+        "confessions",
+        JSON.stringify(confessions)
+      );
+
+    }
+
+
+    // Display confessions
+    function displayConfessions() {
+
+      confessionsContainer.innerHTML = "";
+
+
+      if (confessions.length === 0) {
+
+        confessionsContainer.innerHTML =
+          '<div class="empty">No confessions yet... 👀<br>Be the first!</div>';
+
+        return;
+
+      }
+
+
+      confessions
+        .slice()
+        .reverse()
+        .forEach((confession, index) => {
+
+          const actualIndex =
+            confessions.length - 1 - index;
+
+
+          const article =
+            document.createElement("article");
+
+          article.className = "confession";
+
+
+          const text =
+            document.createElement("p");
+
+          text.className = "confession-text";
+
+          text.textContent =
+            confession.text;
+
+
+          const footer =
+            document.createElement("div");
+
+          footer.className =
+            "confession-footer";
+
+
+          const date =
+            document.createElement("span");
+
+          date.className = "date";
+
+          date.textContent =
+            confession.date;
+
+
+          const likeButton =
+            document.createElement("button");
+
+          likeButton.className =
+            "like-btn";
+
+          likeButton.textContent =
+            "❤️ " + confession.likes;
+
+
+          likeButton.addEventListener(
+            "click",
+            function () {
+
+              confessions[actualIndex].likes++;
+
+              saveConfessions();
+
+              displayConfessions();
+
+            }
+          );
+
+
+          footer.appendChild(date);
+
+          footer.appendChild(likeButton);
+
+
+          article.appendChild(text);
+
+          article.appendChild(footer);
+
+
+          confessionsContainer.appendChild(article);
+
+        });
+
+    }
+
+
+    // Character counter
+    input.addEventListener(
+      "input",
+      function () {
+
+        counter.textContent =
+          input.value.length + "/500";
+
+      }
+    );
+
+
+    // Submit confession
+    submitBtn.addEventListener(
+      "click",
+      function () {
+
+        const confession =
+          input.value.trim();
+
+
+        if (!confession) {
+
+          message.textContent =
+            "⚠️ Write a confession first.";
+
+          return;
+
+        }
+
+
+        confessions.push({
+
+          text: confession,
+
+          likes: 0,
+
+          date:
+            new Date().toLocaleDateString()
+
+        });
+
+
+        saveConfessions();
+
+
+        input.value = "";
+
+        counter.textContent = "0/500";
+
+
+        message.textContent =
+          "✅ Confession posted anonymously!";
+
+
+        displayConfessions();
+
+
+        setTimeout(
+          function () {
+
+            message.textContent = "";
+
+          },
+          3000
+        );
+
+      }
+    );
+
+
+    // Start website
+    displayConfessions();
+
+  </script>
+
+</body>
+</html>
